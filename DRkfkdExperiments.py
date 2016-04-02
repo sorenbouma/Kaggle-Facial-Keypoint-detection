@@ -190,14 +190,13 @@ from lasagne.nonlinearities import very_leaky_rectify
 
 dropoutList=[]
 global dropoutList
-
-def build_cnn(input_var=None, n=5,):
+def build_cnn(input_var=None, n=5,output_n=30):
 	print('building cnn')
 	#counter for number of dropout layers
 	# create a residual learning building block with two stacked 3x3 convlayers as in paper
 	def residual_block(l, increase_dim=False, projection=False,dropout=0):
 		kwargz={};dn=0
-		a=layers.DropoutLayer(l,p=0.1)
+		a=layers.DropoutLayer(l,p=dropout)
 		input_num_filters = l.output_shape[1]
 		if increase_dim:
 			first_stride = (2,2)
@@ -221,7 +220,6 @@ def build_cnn(input_var=None, n=5,):
 				incoming=stack_1,
 				p=dropout,
 				)
-			dropoutList.append(dropout)
 			kwargz[str(dn)]=dropout
 			stack_2 = batch_norm(ConvLayer(
 				dropOut1, 
@@ -269,53 +267,52 @@ def build_cnn(input_var=None, n=5,):
 	l = batch_norm(ConvLayer(l_in, num_filters=4, filter_size=(3,3), stride=(1,1), nonlinearity=very_leaky_rectify, pad='same', W=lasagne.init.HeNormal(gain='relu')))
 	# first stack of residual blocks, output is 16 x 32 x 32
 	for _ in range(n):
-		l = residual_block(l,dropout=0.08)
+		l = residual_block(l,dropout=0.01)
 	print ('first residual stack built')
 	# second stack of residual blocks, output is 32 x 16 x 16
-	l = residual_block(l, increase_dim=True,dropout=0.08)
+	l = residual_block(l, increase_dim=True,dropout=0.01)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.08)
+		l = residual_block(l,dropout=0.01)
 	print('second residual stack built')
 
 	# third stack of residual blocks, output is 64 x 8 x 8
-	l = residual_block(l, increase_dim=True,dropout=0.08)
+	l = residual_block(l, increase_dim=True,dropout=0.01)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.08)
+		l = residual_block(l,dropout=0.01)
 	print('third residual stack built')
 
 
-	l = residual_block(l, increase_dim=True,dropout=0.1)
+	l = residual_block(l, increase_dim=True,dropout=0.01)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.1)
+		l = residual_block(l,dropout=0.01)
 	print('fourth residual stack built')
 
-	l = residual_block(l, increase_dim=True,dropout=0.1)
+	l = residual_block(l, increase_dim=True,dropout=0.01)
 	for _ in range(1,n):
 		l = residual_block(l,dropout=0.1)
 	print('fifth residual stack built')
 
 	l = residual_block(l, increase_dim=True,dropout=0.1)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.1)
+		l = residual_block(l,dropout=0.01)
 	print('sixth residual stack built')
 	
 
 	
 	# average pooling
-	#l = GlobalPoolLayer(l)
-	l=DropoutLayer(l,p=0.4)
-	#dropoutList.append(1)
-	l=DenseLayer(l,num_units=1152,nonlinearity=very_leaky_rectify)
+	l = GlobalPoolLayer(l)
+	l=DropoutLayer(l,p=0.03)
+	l=DenseLayer(l,num_units=256,nonlinearity=very_leaky_rectify)
 	
 	# fully connected layer
 	network = DenseLayer(
-			l, num_units=30,
+			l, num_units=output_n,
 			W=lasagne.init.HeNormal(),
 			nonlinearity=None)
 
 	return network
 print('ready to build cnn')
-from lasagne.objectives import squared_error
+
 network=build_cnn(
 	input_var=None,
 	n=1
@@ -376,11 +373,11 @@ net = NeuralNet(
 	regression=True,
 	batch_iterator_train=FlipBatchIterator(batch_size=32),
 	on_epoch_finished=[
-		AdjustVariable('update_learning_rate', start=0.04, stop=0.003),
+		AdjustVariable('update_learning_rate', start=0.004, stop=0.0003),
 		AdjustVariable('update_momentum', start=0.96, stop=0.9999),
 	   #print('?')THESE DONT WORK. YOU HAVE TO DEFINE A CLASS FOR THESE
 		#on_epoch_finished_test(),
-		ActivateDropout(doList=dropoutList,verbose=True,threshold=0.0045,adjust_lr=False),
+		#ActivateDropout(doList=dropoutList,verbose=True,threshold=0.0045,adjust_lr=False),
 		#SaveWeights(path='PATH_HERE',every_n_epochs=10,only_best=True)
 		
 		],
