@@ -157,6 +157,7 @@ class AdjustVariable(object):
 		#print('current'+self.name+str(getattr(nn,self.name)))
 		epoch = train_history[-1]['epoch']
 		new_value = np.cast['float32'](self.ls[epoch - 1])
+		print(self.name+str(new_value))
 		getattr(nn, self.name).set_value(new_value)
 
 
@@ -267,46 +268,46 @@ def build_cnn(input_var=None, n=5,output_n=30):
 	l = batch_norm(ConvLayer(l_in, num_filters=4, filter_size=(3,3), stride=(1,1), nonlinearity=very_leaky_rectify, pad='same', W=lasagne.init.HeNormal(gain='relu')))
 	# first stack of residual blocks, output is 16 x 32 x 32
 	for _ in range(n):
-		l = residual_block(l,dropout=0.01)
+		l = residual_block(l,dropout=0.1)
 	print ('first residual stack built')
 	# second stack of residual blocks, output is 32 x 16 x 16
-	l = residual_block(l, increase_dim=True,dropout=0.01)
+	l = residual_block(l, increase_dim=True,dropout=0.1)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.01)
+		l = residual_block(l,dropout=0.1)
 	print('second residual stack built')
 
 	# third stack of residual blocks, output is 64 x 8 x 8
-	l = residual_block(l, increase_dim=True,dropout=0.01)
+	l = residual_block(l, increase_dim=True,dropout=0.1)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.01)
+		l = residual_block(l,dropout=0.1)
 	print('third residual stack built')
 
 
-	l = residual_block(l, increase_dim=True,dropout=0.01)
+	l = residual_block(l, increase_dim=True,dropout=0.1)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.01)
+		l = residual_block(l,dropout=0.1)
 	print('fourth residual stack built')
 
-	l = residual_block(l, increase_dim=True,dropout=0.01)
+	l = residual_block(l, increase_dim=True,dropout=0.1)
 	for _ in range(1,n):
 		l = residual_block(l,dropout=0.1)
 	print('fifth residual stack built')
 
 	l = residual_block(l, increase_dim=True,dropout=0.1)
 	for _ in range(1,n):
-		l = residual_block(l,dropout=0.01)
+		l = residual_block(l,dropout=0.1)
 	print('sixth residual stack built')
 	
 
 	
 	# average pooling
 	l = GlobalPoolLayer(l)
-	l=DropoutLayer(l,p=0.03)
+	l=DropoutLayer(l,p=0.4)
 	l=DenseLayer(l,num_units=256,nonlinearity=very_leaky_rectify)
 	
 	# fully connected layer
 	network = DenseLayer(
-			l, num_units=output_n,
+			l, num_units=30,
 			W=lasagne.init.HeNormal(),
 			nonlinearity=None)
 
@@ -368,12 +369,12 @@ print(dropoutList)
 net = NeuralNet(
 	layers=[network],
 	#input_shape=(None, 1, 96, 96),
-	update_learning_rate=theano.shared(float32(0.04)),
+	update_learning_rate=theano.shared(float32(0.03)),
 	update_momentum=theano.shared(float32(0.96)),
 	regression=True,
 	batch_iterator_train=FlipBatchIterator(batch_size=32),
 	on_epoch_finished=[
-		AdjustVariable('update_learning_rate', start=0.004, stop=0.0003),
+		AdjustVariable('update_learning_rate', start=0.03, stop=0.00001),
 		AdjustVariable('update_momentum', start=0.96, stop=0.9999),
 	   #print('?')THESE DONT WORK. YOU HAVE TO DEFINE A CLASS FOR THESE
 		#on_epoch_finished_test(),
