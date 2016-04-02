@@ -15,6 +15,8 @@ better suited to this problem:
 This architecture can get a slight validation loss improvement on dnouri's original kfkd net(0.00069 vs 0.000767)
 and gets good results with much less epochs.
 
+Sorry if the code is horrible, I'm very new to programming.
+
 Thank You Daniel Nouri for your amazing tutorial.
 
 Requires theano, lasagne, nolearn,cudnn, cuda.
