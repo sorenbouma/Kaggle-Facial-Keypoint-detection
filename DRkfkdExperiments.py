@@ -303,13 +303,15 @@ def build_cnn(input_var=None, n=5,output_n=30):
 	# average pooling
 	l = GlobalPoolLayer(l)
 	l=DropoutLayer(l,p=0.4)
-	l=DenseLayer(l,num_units=256,nonlinearity=very_leaky_rectify)
-	
+	l=DenseLayer(l,num_units=64,nonlinearity=very_leaky_rectify)
+	l=DropoutLayer(l,p=0.4)
+	l=DenseLayer(l,num_units=64,nonlinearity=very_leaky_rectify)
 	# fully connected layer
 	network = DenseLayer(
 			l, num_units=30,
 			W=lasagne.init.HeNormal(),
 			nonlinearity=None)
+			
 
 	return network
 print('ready to build cnn')
