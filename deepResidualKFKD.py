@@ -205,15 +205,26 @@ def build_cnn(input_var=None, n=5,):
             first_stride = (1,1)
             out_num_filters = input_num_filters
 
-        stack_1 = batch_norm(ConvLayer(
+        #stack_1 = batch_norm(ConvLayer(
+        #    l, 
+        #    num_filters=out_num_filters, 
+        #    filter_size=(3,3), 
+        #    stride=first_stride, 
+        #    nonlinearity=nonlinearities.very_leaky_rectify, 
+        #    pad='same', 
+        #    W=lasagne.init.HeNormal(gain='relu')
+        #    ))
+        l=batch_norm(l)
+        l=NonlinearityLayer(l
+        stack_1=ConvLayer(
             l, 
             num_filters=out_num_filters, 
             filter_size=(3,3), 
             stride=first_stride, 
-            nonlinearity=nonlinearities.very_leaky_rectify, 
+            nonlinearity=None, 
             pad='same', 
             W=lasagne.init.HeNormal(gain='relu')
-            ))
+            )
         if dropout > 0:
             dn+=1
             dropOut1=layers.DropoutLayer(
@@ -222,25 +233,40 @@ def build_cnn(input_var=None, n=5,):
                 )
             dropoutList.append(dropout)
             kwargz[str(dn)]=dropout
-            stack_2 = batch_norm(ConvLayer(
-                dropOut1, 
+            stack_2=batch_norm(dropOut1)
+            stack_2=NonLinearityLayer(stack_2,nonlinearity=relu)
+            
+            stack_2 = ConvLayer(
+                stack_2, 
                 num_filters=out_num_filters,
                 filter_size=(3,3),
                 stride=(1,1),
                 nonlinearity=None,
                 pad='same',
                 W=lasagne.init.HeNormal(gain='relu'),
-                ))
+                )
         else:
-            stack_2 = batch_norm(ConvLayer(
-                stack_1,
+            stack_2=batch_norm(stack_1)
+            stack_2=NonLinearityLayer(stack_2,nonlinearity=relu)
+            
+            stack_2 = ConvLayer(
+                stack_2, 
                 num_filters=out_num_filters,
                 filter_size=(3,3),
                 stride=(1,1),
                 nonlinearity=None,
                 pad='same',
-                W=lasagne.init.HeNormal(gain='relu')
-                ))
+                W=lasagne.init.HeNormal(gain='relu'),
+            
+            #stack_2 = batch_norm(ConvLayer(
+            #    stack_1,
+            #    num_filters=out_num_filters,
+            #    filter_size=(3,3),
+            #    stride=(1,1),
+            #    nonlinearity=None,
+            #    pad='same',
+            #    W=lasagne.init.HeNormal(gain='relu')
+            #    ))
 
         # add shortcut connections
         if increase_dim:
