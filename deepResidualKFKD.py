@@ -205,17 +205,9 @@ def build_cnn(input_var=None, n=5,):
             first_stride = (1,1)
             out_num_filters = input_num_filters
 
-        #stack_1 = batch_norm(ConvLayer(
-        #    l, 
-        #    num_filters=out_num_filters, 
-        #    filter_size=(3,3), 
-        #    stride=first_stride, 
-        #    nonlinearity=nonlinearities.very_leaky_rectify, 
-        #    pad='same', 
-        #    W=lasagne.init.HeNormal(gain='relu')
-        #    ))
+  
         l=batch_norm(l)
-        l=NonlinearityLayer(l
+        l=NonlinearityLayer(l,nonlinearity=rectify)
         stack_1=ConvLayer(
             l, 
             num_filters=out_num_filters, 
@@ -234,7 +226,7 @@ def build_cnn(input_var=None, n=5,):
             dropoutList.append(dropout)
             kwargz[str(dn)]=dropout
             stack_2=batch_norm(dropOut1)
-            stack_2=NonLinearityLayer(stack_2,nonlinearity=relu)
+            stack_2=NonLinearityLayer(stack_2,nonlinearity=rectify)
             
             stack_2 = ConvLayer(
                 stack_2, 
@@ -289,7 +281,7 @@ def build_cnn(input_var=None, n=5,):
 
     # Building the network
     l_in = InputLayer(shape=(None,1, 96, 96), input_var=input_var)
-
+ac
     # first layer, output is 16 x 32 x 32
     l = batch_norm(ConvLayer(l_in, num_filters=16, filter_size=(3,3), stride=(1,1), nonlinearity=very_leaky_rectify, pad='same', W=lasagne.init.HeNormal(gain='relu')))
     
@@ -335,29 +327,6 @@ for lyr in  lasagne.layers.get_all_layers(network):
 
 
 
-    #print(str(lyr) + str(dir(lyr)))
-class ActivateDropout(object):
-    def __init__(self,doList,verbose=False,threshold=0.004,adjust_lr=False):
-        self.doList=doList
-        self.verbose=verbose
-        self.threshold=threshold
-        self.adjust_lr=adjust_lr
-    def __call__(self,nn,train_history):
-        current_valid = train_history[-1]['valid_loss']
-        if np.mean(current_valid) <= self.threshold:
-            i=0;
-            for lyr in lasagne.layers.get_all_layers(nn.layers[0]):
-                if 'Dropout' in str(type(lyr)):
-                    if lyr.p!=0:
-                        break
-                    lyr.p=self.doList[i]
-                    if self.verbose:
-                        print('p adjusted to ' +str(lyr.p))
-                    i+=1
-            if self.adjust_lr:
-                print('lr adjustment not ready yet')
-            #    lr=getattr(nn,'update_learning_rate')
-
 def l2Nesterov(loss_or_grads,params,learning_rate,momentum=0.9,reg=0.001):
     updates=nesterov_momentum(loss_or_grads,params,learning_rate,momentum)
      
@@ -377,7 +346,6 @@ net = NeuralNet(
         AdjustVariable('update_momentum', start=0.9, stop=0.999),
        #print('?')THESE DONT WORK. YOU HAVE TO DEFINE A CLASS FOR THESE
         #on_epoch_finished_test(),
-        ActivateDropout(doList=dropoutList,verbose=True,threshold=0.008,adjust_lr=False),
         #SaveWeights(path='PATH_HERE',every_n_epochs=10,only_best=True)
         
         ],
